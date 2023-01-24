@@ -112,8 +112,15 @@ impl<'a> Lexer<'a> {
                 }
             }
             Some(_) | None => {
-                if let Ok(res) = u64::from_str_radix(&num.replace('_', ""), base) {
-                    (Token::Num60(res), self.mk_range(num_start))
+                if let Ok(start) = u64::from_str_radix(&num.replace('_', ""), base) {
+                    if let Some('.') = self.peekable.peek() {
+                        self.next_char();
+                        let num = self.accumulate_while(&|x| x.is_digit(base) || x == '_');
+                        let Ok(decimal) = u64::from_str_radix(&num.replace('_', ""), base) else { return make_num_err(self) };
+                        (Token::Float(start, decimal), self.mk_range(num_start))
+                    } else {
+                        (Token::Num60(start), self.mk_range(num_start))
+                    }
                 } else {
                     make_num_err(self)
                 }
@@ -148,6 +155,7 @@ impl<'a> Lexer<'a> {
             }
             Some('0'..='9' | _) => {
                 self.lex_num_and_type_with_base(start, 10, EncodeSequence::Decimal)
+                
             }
         }
     }

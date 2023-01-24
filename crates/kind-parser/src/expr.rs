@@ -292,6 +292,17 @@ impl<'a> Parser<'a> {
         }))
     }
 
+    fn parse_float(&mut self, num: f64) -> Result<Box<Expr>, SyntaxDiagnostic> {
+        let range = self.range();
+        self.advance();
+        Ok(Box::new(Expr {
+            range,
+            data: ExprKind::Lit {
+                lit: Literal::NumF60(num),
+            },
+        }))
+    }
+
     fn parse_nat(&mut self, num: u128) -> Result<Box<Expr>, SyntaxDiagnostic> {
         let range = self.range();
         self.advance();
@@ -449,7 +460,11 @@ impl<'a> Parser<'a> {
             Token::LBracket => self.parse_list(),
             Token::LPar => self.parse_paren(),
             Token::Hole => self.parse_hole(),
-            Token::Float(_, _) => todo!(),
+            Token::Float(start, end) => self.parse_float((start as f64) + if end == 0 {
+                0.0
+            } else {
+                (end as f64) / (10.0 as f64).powf(f64::floor(f64::log10(end as f64)) + 1.0)
+            }),
             _ => self.fail(vec![Token::LowerId("".to_string())]),
         }
     }
@@ -881,16 +896,23 @@ impl<'a> Parser<'a> {
 
     pub fn parse_seq(&mut self) -> Result<Box<Expr>, SyntaxDiagnostic> {
         let start = self.range();
+
         self.eat_variant(Token::Bang)?;
+
         let typ = self.parse_atom()?;
+
         let name = self.parse_atom()?;
+
         let mut fields = vec![];
+
         let mut end = self.range();
+
         while let Token::Dot = &self.get() {
             self.advance();
             end = self.range();
             fields.push(self.parse_id()?);
         }
+
         let operation = if self.check_and_eat(Token::Eq) {
             let expr = self.parse_expr(false)?;
             end = expr.range;
@@ -902,6 +924,7 @@ impl<'a> Parser<'a> {
         } else {
             SeqOperation::Get
         };
+
         Ok(Box::new(Expr {
             data: ExprKind::SeqRecord(
                 SeqRecord {

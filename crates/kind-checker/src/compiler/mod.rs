@@ -10,7 +10,7 @@ use kind_span::Range;
 use kind_tree::desugared::{self, Book, Expr};
 use kind_tree::symbol::{Ident, QualifiedIdent};
 
-use hvm::{syntax as lang, u60};
+use hvm::{syntax as lang, u60, f60};
 
 mod tags;
 
@@ -71,6 +71,12 @@ fn mk_var(ident: &str) -> Box<Term> {
 fn mk_u60(numb: u64) -> Box<Term> {
     Box::new(Term::U6O {
         numb: u60::new(numb),
+    })
+}
+
+fn mk_f60(numb: f64) -> Box<Term> {
+    Box::new(Term::F6O {
+        numb: f60::new(numb),
     })
 }
 
@@ -161,7 +167,10 @@ fn codegen_all_expr(
             eval_ctr(quote, TermTag::U60),
             vec![range_to_num(lhs, expr.range)],
         ),
-        NumTypeF60 => todo!(),
+        NumTypeF60 => mk_lifted_ctr(
+            eval_ctr(quote, TermTag::F60),
+            vec![range_to_num(lhs, expr.range)],
+        ),
         Var { name } => {
             if quote && !lhs {
                 set_origin(name)
@@ -287,7 +296,10 @@ fn codegen_all_expr(
             eval_ctr(quote, TermTag::NUMU60),
             vec![range_to_num(lhs, expr.range), mk_u60(*numb)],
         ),
-        NumF60 { numb: _ } => todo!(),
+        NumF60 { numb } => mk_lifted_ctr(
+            eval_ctr(quote, TermTag::NUMF60),
+            vec![range_to_num(lhs, expr.range), mk_f60(*numb)],
+        ),
         Binary { op, left, right } => mk_lifted_ctr(
             eval_ctr(quote, TermTag::Binary),
             vec![

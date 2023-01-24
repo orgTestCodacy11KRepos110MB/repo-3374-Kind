@@ -10,10 +10,10 @@ use kind_span::Range;
 use crate::symbol::{Ident, QualifiedIdent};
 
 // Really useful thin layer on ident.
-#[derive(Clone, Debug, Hash, PartialEq, Eq)]
+#[derive(Clone, Debug)]
 pub struct PatIdent(pub Ident);
 
-#[derive(Clone, Debug, Hash, PartialEq, Eq)]
+#[derive(Clone, Debug)]
 pub enum PatKind {
     /// Name of a variable
     Var(PatIdent),
@@ -24,7 +24,7 @@ pub enum PatKind {
     /// 120 bit unsigned integer
     U120(u128),
     /// 60 bit floating point number
-    F60(u64),
+    F60(f64),
     /// Pair
     Pair(Box<Pat>, Box<Pat>),
     /// List
@@ -38,7 +38,7 @@ pub enum PatKind {
 }
 
 /// Describes a single `pattern`
-#[derive(Clone, Debug, Hash, PartialEq, Eq)]
+#[derive(Clone, Debug)]
 pub struct Pat {
     pub data: PatKind,
     pub range: Range,
@@ -66,7 +66,7 @@ impl Display for Pat {
             Str(str) => write!(f, "\"{}\"", str),
             U60(num) => write!(f, "{}", num),
             U120(num) => write!(f, "{}u120", num),
-            F60(_num) => todo!(),
+            F60(b) => write!(f, "{}", b),
             Char(chr) => write!(f, "\'{}\'", chr),
             Pair(fst, snd) => write!(f, "({}, {})", fst, snd),
             Hole => write!(f, "_"),

@@ -1,7 +1,9 @@
 //! This module describes an unsugared tree that
 //! is used by the type checker and by the targets.
 
-use std::fmt::{Display, Error, Formatter};
+use std::{
+    fmt::{Display, Error, Formatter},
+};
 
 use fxhash::FxHashMap;
 use kind_span::Range;
@@ -11,7 +13,8 @@ pub use crate::Operator;
 
 use crate::{
     symbol::{Ident, QualifiedIdent},
-    Attributes, telescope::Telescope,
+    telescope::Telescope,
+    Attributes,
 };
 
 /// Just a vector of expressions. It is called spine because
@@ -19,13 +22,13 @@ use crate::{
 /// as ((((a b) c) d) e) that looks like a spine.
 pub type Spine = Vec<Box<Expr>>;
 
-#[derive(Clone, Debug, Hash, PartialEq, Eq)]
+#[derive(Clone, Debug)]
 pub struct AppBinding {
     pub data: Box<Expr>,
     pub erased: bool,
 }
 
-#[derive(Clone, Debug, Hash, PartialEq, Eq)]
+#[derive(Clone, Debug)]
 pub enum ExprKind {
     /// Name of a variable
     Var { name: Ident },
@@ -75,7 +78,7 @@ pub enum ExprKind {
     /// 60 bit integer
     NumU60 { numb: u64 },
     /// 60 bit floating point number
-    NumF60 { numb: u64 },
+    NumF60 { numb: f64 },
     /// Very special constructor :)
     Str { val: String },
     /// Binary operation (e.g. 2 + 3)
@@ -94,7 +97,7 @@ pub enum ExprKind {
     Err,
 }
 
-#[derive(Clone, Debug, Hash, PartialEq, Eq)]
+#[derive(Clone, Debug)]
 pub struct Expr {
     pub data: ExprKind,
     pub range: Range,
@@ -170,8 +173,11 @@ impl Expr {
             })
     }
 
-
-    pub fn unfold_all(irrelev: &[bool], idents: &[(Ident, Box<Expr>)], body: Box<Expr>) -> Box<Expr> {
+    pub fn unfold_all(
+        irrelev: &[bool],
+        idents: &[(Ident, Box<Expr>)],
+        body: Box<Expr>,
+    ) -> Box<Expr> {
         idents
             .iter()
             .rev()
@@ -244,6 +250,13 @@ impl Expr {
         })
     }
 
+    pub fn num_f60(range: Range, numb: f64) -> Box<Expr> {
+        Box::new(Expr {
+            range,
+            data: ExprKind::NumF60 { numb },
+        })
+    }
+
     pub fn num_u120(range: Range, numb: u128) -> Box<Expr> {
         let name = QualifiedIdent::new_static("U120.new", None, range);
         let lo = Expr::num_u60(range, (numb & 0xFFFFFFFFFFFFFFF) as u64);
@@ -254,13 +267,6 @@ impl Expr {
                 name,
                 args: vec![hi, lo],
             },
-        })
-    }
-
-    pub fn num_f60(range: Range, numb: u64) -> Box<Expr> {
-        Box::new(Expr {
-            range,
-            data: ExprKind::NumF60 { numb },
         })
     }
 
@@ -345,7 +351,7 @@ pub struct Entry {
 pub struct Family {
     pub name: QualifiedIdent,
     pub parameters: Telescope<Argument>,
-    pub constructors: Vec<QualifiedIdent>
+    pub constructors: Vec<QualifiedIdent>,
 }
 
 /// A book is a collection of desugared entries.
@@ -398,16 +404,12 @@ impl Display for AppBinding {
 
 pub fn try_desugar_to_nat(name: &QualifiedIdent, spine: &[Box<Expr>], acc: u128) -> Option<u128> {
     match name.to_str() {
-        "Nat.zero" if spine.len() == 0 => {
-            Some(acc)
-        }
-        "Nat.succ" if spine.len() == 1 => {
-            match &spine[0].data {
-                ExprKind::Ctr { name, args } => try_desugar_to_nat(name, args, acc + 1),
-                _ => None
-            }
-        }
-        _ => None
+        "Nat.zero" if spine.len() == 0 => Some(acc),
+        "Nat.succ" if spine.len() == 1 => match &spine[0].data {
+            ExprKind::Ctr { name, args } => try_desugar_to_nat(name, args, acc + 1),
+            _ => None,
+        },
+        _ => None,
     }
 }
 

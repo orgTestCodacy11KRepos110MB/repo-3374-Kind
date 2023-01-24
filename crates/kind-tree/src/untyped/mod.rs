@@ -18,7 +18,7 @@ use crate::{
 /// as ((((a b) c) d) e) that looks like a spine.
 pub type Spine = Vec<Box<Expr>>;
 
-#[derive(Clone, Debug, Hash, PartialEq, Eq)]
+#[derive(Clone, Debug)]
 pub enum ExprKind {
     /// Name of a variable
     Var {
@@ -57,7 +57,7 @@ pub enum ExprKind {
     },
     /// 60 bit floating point number
     F60 {
-        numb: u64,
+        numb: f64,
     },
     /// Very special constructor :)
     Str {
@@ -73,7 +73,7 @@ pub enum ExprKind {
     Err,
 }
 
-#[derive(Clone, Debug, Hash, PartialEq, Eq)]
+#[derive(Clone, Debug)]
 pub struct Expr {
     pub data: ExprKind,
     pub range: Range,
@@ -140,7 +140,7 @@ impl Expr {
         })
     }
 
-    pub fn f60(range: Range, numb: u64) -> Box<Expr> {
+    pub fn f60(range: Range, numb: f64) -> Box<Expr> {
         Box::new(Expr {
             range,
             data: ExprKind::F60 { numb },

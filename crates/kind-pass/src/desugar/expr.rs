@@ -55,7 +55,7 @@ impl<'a> DesugarState<'a> {
                 }
                 desugared::Expr::num_u120(range, *num)
             }
-            Literal::NumF60(num) => desugared::Expr::num_f60(range, *num),
+            Literal::NumF60(start) => desugared::Expr::num_f60(range, *start),
             Literal::Char(cht) => desugared::Expr::num_u60(range, *cht as u64),
         }
     }

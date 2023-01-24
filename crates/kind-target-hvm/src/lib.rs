@@ -1,4 +1,4 @@
-use hvm::u60;
+use hvm::{u60, f60};
 
 use kind_tree::{
     backend::{File, Rule, Term},
@@ -60,7 +60,9 @@ pub fn compile_term(expr: &untyped::Expr) -> Box<Term> {
         U60 { numb } => Box::new(Term::U6O {
             numb: u60::new(*numb),
         }),
-        F60 { numb: _ } => todo!(),
+        F60 { numb: f } => Box::new(Term::F6O {
+            numb: f60::new(*f),
+        }),
         Binary { op, left, right } => Box::new(Term::Ctr {
             name: op.to_string(),
             args: vec![compile_term(left), compile_term(right)],

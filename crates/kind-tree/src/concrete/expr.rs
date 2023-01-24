@@ -102,7 +102,7 @@ pub enum Literal {
     // A 120 bit number literal
     NumU120(u128),
     // A 60 bit floating point number literal
-    NumF60(u64),
+    NumF60(f64),
     // Naturals represented by u128
     Nat(u128),
     // A String literal
@@ -404,7 +404,7 @@ impl Display for Literal {
             Literal::NumU60(numb) => write!(f, "{}", numb),
             Literal::Nat(numb) => write!(f, "{}numb", numb),
             Literal::NumU120(numb) => write!(f, "{}u120", numb),
-            Literal::NumF60(numb) => write!(f, "{}f60", numb),
+            Literal::NumF60(b) => write!(f, "{}", b),
             Literal::String(str) => {
                 write!(f, "{:?}", str)
             }
